@@ -79,16 +79,25 @@ angular.module('main')
         },
         // Error.
         function (error) {
-          // defer.reject({ERROR: error});
-          // console.log('ERROR: ' + error);
-
           // No cordova? Let's try HTML5 for kicks.
           navigator.geolocation.getCurrentPosition(function gotPositionHTML (position) {
             $log.log('Got location with navigator:', position);
             defer.resolve(position);
           }, function noPositionHTML(err) {
-            $log.log('Coudlnt get location at all');
-            defer.reject({ERROR: error});
+                $log.log("Couldn't get location... Using default.");
+                var position = {
+                    coords: {
+                        accuracy: 70,
+                        altitude: null,
+                        altitudeAccuracy: null,
+                        heading: null,
+                        latitude: 42.39137720000001,
+                        longitude: -71.1473425,
+                        speed: null
+                    },
+                    timestamp: 1463167968457
+                }
+                defer.resolve(position);
           });
         }
       );
