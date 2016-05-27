@@ -6,7 +6,28 @@ angular.module('main')
 
     // Note that 'mapCtrl' is also established in the routing in main.js.
     var mapCtrl = this;
-    Geolocation.getUserPosition(getPositionSuccess, getPositionFailure)
+    //Geolocation.getUserPosition(getPositionSuccess, getPositionFailure)
+    $scope.userPosition = null;
+    $scope.defaultPosition = {
+        coords: {
+            accuracy: 70,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            latitude: 42.39137720000001,
+            longitude: -71.1473425,
+            speed: null
+        },
+        timestamp: 1463167968457
+    };
+    $scope.getPositionSuccess = function(position) {
+        $log.log("Success. Using obtained position.");
+        $scope.userPosition = position;
+    };
+    $scope.getPositionFailure = function() {
+        $log.log("Failed. Using default position.");
+        $scope.userPosition = $scope.defaultPosition;
+    };
 
     // Initialize the map object. When that is done
     // we can set up our event hooks and generate the
@@ -92,28 +113,5 @@ angular.module('main')
     // We will want to display the markers info
     function onMarkerSelected(){
         //console.log('map clicked');
-    }
-
-    function getPositionSuccess(position) {
-        $log.log("Success. Using obtained position.");
-        $scope.userPosition = position;
-        $log.log(position);
-    }
-
-    function getPositionFailure() {
-        $log.log("Failed. Using default position.");
-        var defaultPosition = {
-            coords: {
-                accuracy: 70,
-                altitude: null,
-                altitudeAccuracy: null,
-                heading: null,
-                latitude: 42.39137720000001,
-                longitude: -71.1473425,
-                speed: null
-            },
-            timestamp: 1463167968457
-        };
-        $scope.userPosition = defaultPosition;
     }
 });
