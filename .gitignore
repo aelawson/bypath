@@ -81,10 +81,14 @@ target/
 
 scratch/
 
-node_modules
+
 bower_content
 
 # web
 web/bower_components
-node_modules
+
 web/www/*
+
+.directory
+
+mobile/platforms/ios/
