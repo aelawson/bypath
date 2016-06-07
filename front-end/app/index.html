@@ -28,10 +28,6 @@
   <body ng-app="ByPath">
     <!-- 404 during development -->
     <script src="cordova.js"></script>
-    <!-- MapQuest  -->
-    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.s/mq-map.js?key=Qv1Luab3C8BC0QUaHyC7DxHkfO3qyWyw"></script>
-    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.s/mq-routing.js?key=Qv1Luab3C8BC0QUaHyC7DxHkfO3qyWyw"></script>
-    <script src="cordova.js"></script>
 
     <!-- build:js scripts/vendor.js -->
     <!-- bower:js -->
@@ -60,6 +56,7 @@
     <script src="main/main.js"></script>
     <script src="main/services/utilities.factory.js"></script>
     <script src="main/services/tilesets.factory.js"></script>
+    <script src="main/services/routes.factory.js"></script>
     <script src="main/services/query.factory.js"></script>
     <script src="main/services/marker.factory.js"></script>
     <script src="main/services/map.factory.js"></script>
@@ -80,6 +77,13 @@
     <script src="app.js"></script>
     <!-- endinject -->
     <!-- endbuild -->
+
+    <!-- MapQuest  -->
+    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.s/mq-map.js?key=Qv1Luab3C8BC0QUaHyC7DxHkfO3qyWyw"></script>
+    <script src="https://www.mapquestapi.com/sdk/leaflet/v2.s/mq-routing.js?key=Qv1Luab3C8BC0QUaHyC7DxHkfO3qyWyw"></script>
+    <!-- MapZen -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-geocoder-mapzen/1.4.1/leaflet-geocoder-mapzen.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-geocoder-mapzen/1.4.1/leaflet-geocoder-mapzen.js"></script>
 
     <ion-pane>
         <!-- Title Bar -->

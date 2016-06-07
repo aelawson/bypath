@@ -2,7 +2,7 @@
 
 angular.module('main')
 
-.factory('Map', function(Geolocation, leafletData) {
+.factory('Map', function(Config, Geolocation, leafletData) {
 
 	var watchId;
 
@@ -14,18 +14,104 @@ angular.module('main')
         });
     };
 
+    /**
+    * Initializes Leaflet map position, data, and events.
+    * Takes callbacks for positioning success/failure, data,
+    * and event initializers.
+    *
+    * @param  {Function, Function, Function, Function}
+    * @return {}
+    */
 	function initMap(positionSuccess, positionError, mapData, mapEvents) {
 	    this.watchId = startWatchingUserPosition();
 	    this.watchId
 	    .then(null, positionError, positionSuccess)
-	    .then(initMapSettings(mapData, mapEvents));
+	    .then(initMapSettings(mapData, mapEvents))
+        .then(setMapProperty(initGeocoder))
+        .then(setMapProperty(initZoomControls));
 	};
 
+    /**
+    * Sets initial data and events for the Leaflet map object by
+    * executing two callbacks which optionally accept a map object argument.
+    *
+    * @param  {Function, Function}
+    * @return {}
+    */
     function initMapSettings(mapData, mapEvents) {
-        leafletData.getMap("map")
-        .then(function(map) {
+        setMapProperty(function(map) {
             mapData();
             mapEvents(map);
+        })
+    };
+
+    /**
+    * Initializes geocoder on the Leaflet map object.
+    *
+    * @param  {Object}
+    * @return {}
+    */
+    function initGeocoder(map) {
+        var options = {
+            bounds: true,
+            position: 'topright',
+            expanded: true,
+            fullWidth: true
+        };
+        var geocoder = L.control.geocoder(Config.ENV.MAPZEN_KEY, options);
+        geocoder.addTo(map);
+    };
+
+    /**
+    * Initializes geocoder on the Leaflet map object.
+    *
+    * @param  {Object}
+    * @return {}
+    */
+    function initZoomControls(map) {
+        var zoomControls = L.control.zoom({ position: 'topright' });
+        zoomControls.addTo(map);
+    };
+
+    /**
+    * Retrieves the Leaflet map object then executes a callback
+    * which accepts a map object argument.
+    *
+    * @param  {Function}
+    * @return {}
+    */
+    function setMapProperty(callback) {
+        leafletData.getMap("map")
+        .then(callback);
+    };
+
+    /**
+    * Adds a given route as a layer to the Leaflet map object.
+    *
+    * @param  {Function}
+    * @return {}
+    */
+    function addRouteToMap(route) {
+        setMapProperty(function(map) {
+            map.addLayer(MQ.routing.routeLayer({
+                directions: route,
+                fitBounds: true
+            }));
+        });
+    };
+
+    /**
+    * Removes routes from the Leaflet map object.
+    *
+    * @param  {}
+    * @return {}
+    */
+    function removeRouteFromMap() {
+        setMapProperty(function(map) {
+            map.addLayer(MQ.routing.routeLayer({
+                directions: route,
+                fitBounds: true
+            }));
         });
     };
 
