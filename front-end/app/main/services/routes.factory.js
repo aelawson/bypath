@@ -11,6 +11,7 @@ angular.module('main')
     * @return {Directions}
     */
 	function getRouteFromStrings(a, b) {
+		console.log("Route");
 		var dir = MQ.routing.directions();
 	    dir.route({
 	      locations: [a, b]
@@ -26,14 +27,13 @@ angular.module('main')
     * @return {Directions}
     */
 	function getRouteFromLatLng(a, b) {
-		dir = MQ.routing.directions();
+		var dir = MQ.routing.directions();
 		dir.route({
-			locations: [
-				{ latLng: { lat: a.lat, lng: a.lng } },
-				{ latLng: { lat: b.lat, lng: b.lng } }
-			]
+		  locations: [
+		    a,
+		    b
+		  ]
 		});
-
 		return dir;
 	};
 

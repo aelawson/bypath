@@ -2,7 +2,7 @@
 
 angular.module('main')
 
-.controller('MainCtrl', function($rootScope, $log, $timeout, Geolocation) {
+.controller('MainCtrl', function($rootScope, $log) {
 
     var mainCtrl = this;
 

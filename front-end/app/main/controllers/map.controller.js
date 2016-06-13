@@ -2,9 +2,10 @@
 
 angular.module('main')
 
-.controller('MapCtrl', function($scope, $state, $log, $filter, Config, Database, Map, TileSets) {
+.controller('MapCtrl', function($scope, $state, $log, $filter, $cordovaGeolocation, Config, Database, Map, Routes, TileSets) {
 
     var mapCtrl = this;
+    var watchId;
     mapCtrl.incidents = {};
     mapCtrl.incidentsGeotagged = [];
     mapCtrl.filters = {};
@@ -34,6 +35,8 @@ angular.module('main')
         lng: -71.1473425,
         zoom: 12
     };
+    $scope.lastPollingLocation = {};
+    $scope.currentPollingLocation = {};
 
     // Initialize map data.
     function initMapData() {
@@ -57,13 +60,26 @@ angular.module('main')
         }); 
     };
 
-    function positionSuccess(position) {
-        $log.debug("Updated user position.");
-        $scope.center = Map.getCenterObject(position.coords.latitude, position.coords.longitude, 12);
-    };
-
-    function positionError(error) {
-        $log.debug("Failed to update user position.");
+    /**
+    * Initializes geocoder on the Leaflet map object.
+    *
+    * @param  {Object}
+    * @return {}
+    */
+    function initGeocoder(map) {
+        var options = {
+            bounds: true,
+            position: 'topright',
+            expanded: true,
+            fullWidth: true
+        };
+        var geocoder = L.control.geocoder(Config.ENV.MAPZEN_KEY, options);
+        var lat = 0;
+        var lng = 0;
+        geocoder.on('select', function(e) {
+          e.target.marker._popup = popup;
+        });
+        geocoder.addTo(map);
     };
 
     function generateMapMarkers() {
@@ -93,5 +109,32 @@ angular.module('main')
         $scope.markers = markers;
     };
 
-    Map.initMap(positionSuccess, positionError, initMapData, initMapEvents);
+    function initDefaultRoute() {
+        console.log("Started Route");
+        var src = { lat: $scope.center.lat, lng: $scope.center.lng };
+        var dest = { lat: 42.3501645, lng: -71.0589211 };
+        var route = Routes.getRouteFromLatLng(src, dest);
+        console.log(route);
+        Map.addRouteToMap(route);
+        console.log("Finished Route");
+    };
+
+    var pollCurrentLocation = function(timeout, success, error) {
+        $cordovaGeolocation.getCurrentPosition({
+            timeout : 5000,
+            maximumAge: 3000,
+            enableHighAccuracy: true // may cause errors if true
+        })
+        .then(function(position) {
+            $log.debug("Updated user position.");
+            $scope.center = Map.getCenterObject(position.coords.latitude, position.coords.longitude, $scope.center.zoom);
+        }, function(error) {
+            $log.debug("Failed to update user position.");
+            $log.debug(error);
+        });
+
+        setTimeout(pollCurrentLocation, timeout);
+    };
+
+    pollCurrentLocation(1000, positionSuccess, positionError);
 });

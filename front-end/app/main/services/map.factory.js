@@ -2,34 +2,25 @@
 
 angular.module('main')
 
-.factory('Map', function(Config, Geolocation, leafletData) {
+.factory('Map', function(Config, leafletData, $cordovaGeolocation) {
+    var popup = '\
+    <span class="leaflet-pelias-layer-icon-container">\
+        <div class="leaflet-pelias-layer-icon leaflet-pelias-layer-icon-point" title="layer: address">\
+        </div>\
+    </span>\
+    <strong>10 Wendell St</strong>reet, Cambridge, MA, USA"\
+    <span><strong>Get directions</strong></span>';
 
-	var watchId;
+    var pollCurrentLocation = function(timeout, positionSuccess, positionError) {
+        $cordovaGeolocation.getCurrentPosition({
+            timeout : 5000,
+            maximumAge: 3000,
+            enableHighAccuracy: true // may cause errors if true
+        })
+        .then(positionSuccess, positionError);
 
-    function startWatchingUserPosition() {
-        return Geolocation.watchUserPosition({
-            frequency : 1000,
-            timeout : 3000,
-            enableHighAccuracy: true
-        });
+        setTimeout(pollCurrentLocation, timeout);
     };
-
-    /**
-    * Initializes Leaflet map position, data, and events.
-    * Takes callbacks for positioning success/failure, data,
-    * and event initializers.
-    *
-    * @param  {Function, Function, Function, Function}
-    * @return {}
-    */
-	function initMap(positionSuccess, positionError, mapData, mapEvents) {
-	    this.watchId = startWatchingUserPosition();
-	    this.watchId
-	    .then(null, positionError, positionSuccess)
-	    .then(initMapSettings(mapData, mapEvents))
-        .then(setMapProperty(initGeocoder))
-        .then(setMapProperty(initZoomControls));
-	};
 
     /**
     * Sets initial data and events for the Leaflet map object by
@@ -39,27 +30,10 @@ angular.module('main')
     * @return {}
     */
     function initMapSettings(mapData, mapEvents) {
-        setMapProperty(function(map) {
+        return setMapProperty(function(map) {
             mapData();
             mapEvents(map);
         })
-    };
-
-    /**
-    * Initializes geocoder on the Leaflet map object.
-    *
-    * @param  {Object}
-    * @return {}
-    */
-    function initGeocoder(map) {
-        var options = {
-            bounds: true,
-            position: 'topright',
-            expanded: true,
-            fullWidth: true
-        };
-        var geocoder = L.control.geocoder(Config.ENV.MAPZEN_KEY, options);
-        geocoder.addTo(map);
     };
 
     /**
@@ -81,7 +55,7 @@ angular.module('main')
     * @return {}
     */
     function setMapProperty(callback) {
-        leafletData.getMap("map")
+        return leafletData.getMap("map")
         .then(callback);
     };
 
@@ -143,9 +117,10 @@ angular.module('main')
     };
 
 	return {
-		watchId : watchId,
-		initMap : initMap,
 		getCenterObject: getCenterObject,
-		getCurrentViewport: getCurrentViewport
+		getCurrentViewport: getCurrentViewport,
+        addRouteToMap: addRouteToMap,
+        pollCurrentLocation: pollCurrentLocation,
+        setMapProperty: setMapProperty
 	};
 });
