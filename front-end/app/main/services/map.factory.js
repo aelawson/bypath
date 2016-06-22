@@ -11,31 +11,6 @@ angular.module('main')
     <strong>10 Wendell St</strong>reet, Cambridge, MA, USA"\
     <span><strong>Get directions</strong></span>';
 
-    var pollCurrentLocation = function(timeout, positionSuccess, positionError) {
-        $cordovaGeolocation.getCurrentPosition({
-            timeout : 5000,
-            maximumAge: 3000,
-            enableHighAccuracy: true // may cause errors if true
-        })
-        .then(positionSuccess, positionError);
-
-        setTimeout(pollCurrentLocation, timeout);
-    };
-
-    /**
-    * Sets initial data and events for the Leaflet map object by
-    * executing two callbacks which optionally accept a map object argument.
-    *
-    * @param  {Function, Function}
-    * @return {}
-    */
-    function initMapSettings(mapData, mapEvents) {
-        return setMapProperty(function(map) {
-            mapData();
-            mapEvents(map);
-        })
-    };
-
     /**
     * Initializes geocoder on the Leaflet map object.
     *
@@ -120,7 +95,6 @@ angular.module('main')
 		getCenterObject: getCenterObject,
 		getCurrentViewport: getCurrentViewport,
         addRouteToMap: addRouteToMap,
-        pollCurrentLocation: pollCurrentLocation,
         setMapProperty: setMapProperty
 	};
 });

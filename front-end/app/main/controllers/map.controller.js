@@ -35,8 +35,8 @@ angular.module('main')
         lng: -71.1473425,
         zoom: 12
     };
-    $scope.lastPollingLocation = {};
-    $scope.currentPollingLocation = {};
+    $scope.userLocation = {};
+    $scope.destination = {};
 
     // Initialize map data.
     function initMapData() {
@@ -77,7 +77,7 @@ angular.module('main')
         var lat = 0;
         var lng = 0;
         geocoder.on('select', function(e) {
-          e.target.marker._popup = popup;
+          $scope.destination = e.latlng;
         });
         geocoder.addTo(map);
     };
@@ -110,24 +110,21 @@ angular.module('main')
     };
 
     function initDefaultRoute() {
-        console.log("Started Route");
-        var src = { lat: $scope.center.lat, lng: $scope.center.lng };
-        var dest = { lat: 42.3501645, lng: -71.0589211 };
-        var route = Routes.getRouteFromLatLng(src, dest);
-        console.log(route);
+        var src = { latLng: { lat: $scope.center.lat, lng: $scope.center.lng } };
+        var dest = { latLng: { lat: 42.3501645, lng: -71.0589211 } };
+        var route = Routes.getRoute(src, dest);
         Map.addRouteToMap(route);
-        console.log("Finished Route");
     };
 
     var pollCurrentLocation = function(timeout, success, error) {
         $cordovaGeolocation.getCurrentPosition({
             timeout : 5000,
             maximumAge: 3000,
-            enableHighAccuracy: true // may cause errors if true
+            enableHighAccuracy: true
         })
         .then(function(position) {
             $log.debug("Updated user position.");
-            $scope.center = Map.getCenterObject(position.coords.latitude, position.coords.longitude, $scope.center.zoom);
+            $scope.userLocation = Map.getCenterObject(position.coords.latitude, position.coords.longitude, $scope.center.zoom);
         }, function(error) {
             $log.debug("Failed to update user position.");
             $log.debug(error);
@@ -136,5 +133,9 @@ angular.module('main')
         setTimeout(pollCurrentLocation, timeout);
     };
 
-    pollCurrentLocation(1000, positionSuccess, positionError);
+    pollCurrentLocation(1000);
+    Map.setMapProperty(initMapEvents);
+    Map.setMapProperty(initMapData);
+    Map.setMapProperty(initGeocoder);
+    initDefaultRoute();
 });

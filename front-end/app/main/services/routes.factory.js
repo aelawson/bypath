@@ -10,7 +10,7 @@ angular.module('main')
     * @param  {String, String}
     * @return {Directions}
     */
-	function getRouteFromStrings(a, b) {
+	function getRoute(a, b) {
 		console.log("Route");
 		var dir = MQ.routing.directions();
 	    dir.route({
@@ -20,25 +20,7 @@ angular.module('main')
 	    return dir;
 	};
 
-	/**
-    * Retrieves route from MapQuest given two latitude and longitude pairs.
-    *
-    * @param  {Object, Object}
-    * @return {Directions}
-    */
-	function getRouteFromLatLng(a, b) {
-		var dir = MQ.routing.directions();
-		dir.route({
-		  locations: [
-		    a,
-		    b
-		  ]
-		});
-		return dir;
-	};
-
 	return {
-		getRouteFromStrings: getRouteFromStrings,
-		getRouteFromLatLng: getRouteFromLatLng
+		getRoute: getRoute
 	};
 });
