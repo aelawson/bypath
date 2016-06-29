@@ -30,11 +30,10 @@ angular.module('main')
             apikey: "pk.eyJ1IjoiYWVsYXdzb24iLCJhIjoiY2luMnBtdGMxMGJta3Y5a2tqd29sZWlzayJ9.wxiPp_RFGYXGB2SzXZvfaA"
         }
     };
-    $scope.center = {
-        lat: 42.39137720000001,
-        lng: -71.1473425,
-        zoom: 12
+    $scope.defaults = {
+        zoomControl: false
     };
+    $scope.mapReady = false;
     $scope.userLocation = {};
     $scope.destination = {};
 
@@ -57,7 +56,7 @@ angular.module('main')
         });
         $scope.$on('leafletDirectiveMarker.map.click', function(e, args) {
             $scope.incidentSelected = args.model.model;
-        }); 
+        });
     };
 
     /**
@@ -74,12 +73,34 @@ angular.module('main')
             fullWidth: true
         };
         var geocoder = L.control.geocoder(Config.ENV.MAPZEN_KEY, options);
-        var lat = 0;
-        var lng = 0;
         geocoder.on('select', function(e) {
           $scope.destination = e.latlng;
         });
         geocoder.addTo(map);
+        var zoomControl = L.control.zoom({
+             position:'topright'
+        });
+        zoomControl.addTo(map);
+        var userLocation = L.easyButton({
+            id: 'id-for-the-button',  // an id for the generated button
+            position: 'bottomright',      // inherited from L.Control -- the corner it goes in
+            type: 'replace',          // set to animate when you're comfy with css
+            leafletClasses: true,     // use leaflet classes to style the button?
+            states:[{                 // specify different icons and responses for your button
+                stateName: 'get-center',
+                onClick: function(button, map) {
+                    $log.debug("Relocate to user.");
+                    var userLocation = {};
+                    userLocation.lat = $scope.userLocation.lat;
+                    userLocation.lng = $scope.userLocation.lng;
+                    userLocation.zoom = $scope.userLocation.zoom;
+                    $scope.center = userLocation;
+                },
+                title: 'show me the middle',
+                icon: 'fa-crosshairs fa-lg'
+            }]
+        });
+        userLocation.addTo(map);
     };
 
     function generateMapMarkers() {
@@ -110,30 +131,85 @@ angular.module('main')
     };
 
     function initDefaultRoute() {
-        var src = { latLng: { lat: $scope.center.lat, lng: $scope.center.lng } };
+        var src = { latLng: { lat: $scope.userLocation.lat, lng: $scope.userLocation.lng } };
         var dest = { latLng: { lat: 42.3501645, lng: -71.0589211 } };
         var route = Routes.getRoute(src, dest);
         Map.addRouteToMap(route);
     };
 
-    var pollCurrentLocation = function(timeout, success, error) {
+    // TODO: This is redundant - am running into issues with the scope of $scope (yodawg) when I try to use callbacks.
+    // Need to figure that out and abstract this out into a singular function.
+    var getInitialLocation = function() {
         $cordovaGeolocation.getCurrentPosition({
             timeout : 5000,
             maximumAge: 3000,
             enableHighAccuracy: true
         })
-        .then(function(position) {
+        .then(function positionSuccess(position) {
             $log.debug("Updated user position.");
-            $scope.userLocation = Map.getCenterObject(position.coords.latitude, position.coords.longitude, $scope.center.zoom);
-        }, function(error) {
+            $scope.userLocation = Map.getCenterObject(
+                position.coords.latitude,
+                position.coords.longitude,
+                12
+            );
+            $scope.center = $scope.userLocation;
+            $scope.mapReady = true;
+        }, function positionError(error) {
             $log.debug("Failed to update user position.");
             $log.debug(error);
+            $scope.center = {
+                lat: 42.39137720000001,
+                lng: -71.1473425,
+                zoom: 12
+            };
+            $scope.userLocation = $scope.center;
+            $scope.mapReady = true;
         });
+    };
 
+    var getCurrentLocation = function() {
+        $cordovaGeolocation.getCurrentPosition({
+            timeout : 5000,
+            maximumAge: 3000,
+            enableHighAccuracy: true
+        })
+        .then(function positionSuccess(position) {
+            $log.debug("Updated user position.");
+            $scope.userLocation = Map.getCenterObject(
+                position.coords.latitude,
+                position.coords.longitude,
+                $scope.userLocation.zoom
+            );
+        }, function positionError(error) {
+            $log.debug("Failed to update user position.");
+            $log.debug(error);
+            $scope.userLocation = {
+                lat: 42.39137720000001,
+                lng: -71.1473425,
+                zoom: 12
+            };
+        });
+    };
+
+    var pollCurrentLocation = function(timeout) {
+        getCurrentLocation();
         setTimeout(pollCurrentLocation, timeout);
     };
 
-    pollCurrentLocation(1000);
+    // Get initial location and load map.
+    if (navigator.geolocation) {
+        $log.debug("Get initial location.");
+        getInitialLocation();
+    }
+    else {
+        $scope.center = {
+            lat: 42.39137720000001,
+            lng: -71.1473425,
+            zoom: 12
+        };
+        $scope.mapReady = true;
+    }
+
     Map.setMapProperty(initMapEvents);
     Map.setMapProperty(initMapData);
     Map.setMapProperty(initGeocoder);
