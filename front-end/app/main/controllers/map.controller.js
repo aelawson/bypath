@@ -35,7 +35,7 @@ angular.module('main')
     };
     $scope.mapReady = false;
     $scope.userLocation = {};
-    $scope.destination = {};
+    $scope.userDestination = {};
 
     // Initialize map data.
     function initMapData() {
@@ -74,7 +74,7 @@ angular.module('main')
         };
         var geocoder = L.control.geocoder(Config.ENV.MAPZEN_KEY, options);
         geocoder.on('select', function(e) {
-          $scope.destination = e.latlng;
+          $scope.userDestination = e.latlng;
         });
         geocoder.addTo(map);
         var zoomControl = L.control.zoom({
@@ -82,25 +82,48 @@ angular.module('main')
         });
         zoomControl.addTo(map);
         var userLocation = L.easyButton({
-            id: 'id-for-the-button',  // an id for the generated button
-            position: 'bottomright',      // inherited from L.Control -- the corner it goes in
+            id: 'user-location',  // an id for the generated button
+            position: 'topright',      // inherited from L.Control -- the corner it goes in
             type: 'replace',          // set to animate when you're comfy with css
             leafletClasses: true,     // use leaflet classes to style the button?
             states:[{                 // specify different icons and responses for your button
                 stateName: 'get-center',
                 onClick: function(button, map) {
                     $log.debug("Relocate to user.");
-                    var userLocation = {};
-                    userLocation.lat = $scope.userLocation.lat;
-                    userLocation.lng = $scope.userLocation.lng;
-                    userLocation.zoom = $scope.userLocation.zoom;
-                    $scope.center = userLocation;
+                    $scope.center = Map.getLocationObject(
+                        $scope.userLocation.lat,
+                        $scope.userLocation.lng,
+                        $scope.center.zoom
+                    );
                 },
-                title: 'show me the middle',
+                title: 'Your location',
                 icon: 'fa-crosshairs fa-lg'
             }]
         });
         userLocation.addTo(map);
+        var navigateTo = L.easyButton({
+            id: 'navigate-to',  // an id for the generated button
+            position: 'topright',      // inherited from L.Control -- the corner it goes in
+            type: 'replace',          // set to animate when you're comfy with css
+            leafletClasses: true,     // use leaflet classes to style the button?
+            states:[{                 // specify different icons and responses for your button
+                stateName: 'get-center',
+                onClick: function(button, map) {
+                    $log.debug("Navigate to destination");
+                    $log.debug($scope.userLocation);
+                    $log.debug($scope.userDestination);
+                    var src = { latLng: { lat: $scope.userLocation.lat, lng: $scope.userLocation.lng } };
+                    var dest = { latLng: { lat: $scope.userDestination.lat, lng: $scope.userDestination.lng } };
+                    $log.debug(src);
+                    $log.debug(dest);
+                    var route = Routes.getRoute(src, dest);
+                    Map.addRouteToMap(route);
+                },
+                title: 'Navigate to destination',
+                icon: 'fa-crosshairs fa-lg'
+            }]
+        });
+        navigateTo.addTo(map);        
     };
 
     function generateMapMarkers() {
@@ -130,13 +153,6 @@ angular.module('main')
         $scope.markers = markers;
     };
 
-    function initDefaultRoute() {
-        var src = { latLng: { lat: $scope.userLocation.lat, lng: $scope.userLocation.lng } };
-        var dest = { latLng: { lat: 42.3501645, lng: -71.0589211 } };
-        var route = Routes.getRoute(src, dest);
-        Map.addRouteToMap(route);
-    };
-
     // TODO: This is redundant - am running into issues with the scope of $scope (yodawg) when I try to use callbacks.
     // Need to figure that out and abstract this out into a singular function.
     var getInitialLocation = function() {
@@ -146,23 +162,31 @@ angular.module('main')
             enableHighAccuracy: true
         })
         .then(function positionSuccess(position) {
-            $log.debug("Updated user position.");
-            $scope.userLocation = Map.getCenterObject(
+            $log.debug("Obtained user position.");
+            $scope.userLocation = Map.getLocationObject(
                 position.coords.latitude,
                 position.coords.longitude,
                 12
             );
-            $scope.center = $scope.userLocation;
+            $scope.center = Map.getLocationObject(
+                position.coords.latitude,
+                position.coords.longitude,
+                12
+            );
             $scope.mapReady = true;
         }, function positionError(error) {
-            $log.debug("Failed to update user position.");
+            $log.debug("Failed to obtain user position.");
             $log.debug(error);
             $scope.center = {
                 lat: 42.39137720000001,
                 lng: -71.1473425,
                 zoom: 12
             };
-            $scope.userLocation = $scope.center;
+            $scope.userLocation = {
+                lat: 42.39137720000001,
+                lng: -71.1473425,
+                zoom: 12
+            };
             $scope.mapReady = true;
         });
     };
@@ -175,10 +199,10 @@ angular.module('main')
         })
         .then(function positionSuccess(position) {
             $log.debug("Updated user position.");
-            $scope.userLocation = Map.getCenterObject(
+            $scope.userLocation = Map.getLocationObject(
                 position.coords.latitude,
                 position.coords.longitude,
-                $scope.userLocation.zoom
+                12
             );
         }, function positionError(error) {
             $log.debug("Failed to update user position.");
@@ -213,5 +237,4 @@ angular.module('main')
     Map.setMapProperty(initMapEvents);
     Map.setMapProperty(initMapData);
     Map.setMapProperty(initGeocoder);
-    initDefaultRoute();
 });

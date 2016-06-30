@@ -83,7 +83,7 @@ angular.module('main')
         return v;
     };
 
-    function getCenterObject(latitude, longitude, zoom) {
+    function getLocationObject(latitude, longitude, zoom) {
         return  {
             lat: latitude,
             lng: longitude,
@@ -92,7 +92,7 @@ angular.module('main')
     };
 
 	return {
-		getCenterObject: getCenterObject,
+		getLocationObject: getLocationObject,
 		getCurrentViewport: getCurrentViewport,
         addRouteToMap: addRouteToMap,
         setMapProperty: setMapProperty
